@@ -1,8 +1,26 @@
+/* eslint-disable @typescript-eslint/camelcase */
 import axios from "axios";
 import MockAdapter from "axios-mock-adapter";
 
 import { AnimalData } from "../../src/api/animalData";
 import { Client } from "../../src/main";
+
+let mock: any;
+beforeEach(()=>{
+    mock = new MockAdapter(axios);
+    mock.onPost("/oauth2/token", {
+        client_id: "foo",
+        client_secret: "bar",
+        grant_type: "client_credentials",
+    }).reply(200, {
+        access_token: "test",
+        expires_in: 3600,
+    });
+});
+
+afterEach(()=> {
+    mock.restore();
+});
 
 it("Creates animal data client", () => {
     const client = new Client({apiKey: "foo", secret: "bar"});
@@ -13,7 +31,6 @@ it("Creates animal data client", () => {
 });
 
 it("Can get animal types", async () => {
-    const mock = new MockAdapter(axios);
     const client = new AnimalData(new Client({apiKey: "foo", secret: "bar", token: "test"}));
 
     mock.onGet("/types").reply(200, {
@@ -25,7 +42,6 @@ it("Can get animal types", async () => {
 });
 
 it("Can get single animal type", async () => {
-    const mock = new MockAdapter(axios);
     const client = new AnimalData(new Client({apiKey: "foo", secret: "bar", token: "test"}));
 
     mock.onGet("/types/Dog").reply(200, {
@@ -37,7 +53,6 @@ it("Can get single animal type", async () => {
 });
 
 it("Can get animal breeds", async () => {
-    const mock = new MockAdapter(axios);
     const client = new AnimalData(new Client({apiKey: "foo", secret: "bar", token: "test"}));
 
     mock.onGet("/types/Dog/breeds").reply(200, {

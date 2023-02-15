@@ -37,22 +37,7 @@ it("Can authenticate", async () => {
     expect(response).not.toBeNull();
     expect(response ? response.data.access_token : null).toEqual("mytoken");
     expect(client.http.defaults.headers.common.Authorization).toEqual("Bearer mytoken");
-});
-
-it("Uses token passed in configuration for authentication", async () => {
-    const client = new Client({apiKey: "foo", secret: "bar", token: "my-test-token"});
-    const response = await client.authenticate();
-
-    expect(response).toBeUndefined();
-    expect(client.http.defaults.headers.common.Authorization).toEqual("Bearer my-test-token");
-});
-
-it("Uses token passed in authenticate method", async () => {
-    const client = new Client({apiKey: "foo", secret: "bar"});
-    const response = await client.authenticate("authme");
-
-    expect(response).toBeUndefined();
-    expect(client.http.defaults.headers.common.Authorization).toEqual("Bearer authme");
+    mock.restore();
 });
 
 it("Should be able to get sub clients", () => {

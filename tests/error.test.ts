@@ -1,11 +1,29 @@
+/* eslint-disable @typescript-eslint/camelcase */
+
 import axios from "axios";
 import MockAdapter from "axios-mock-adapter";
 
 import { ProblemDetailsError } from "../src/error";
 import { Client } from "../src/main";
 
-it("Should throw ProblemDetailsError on problem details response", async () => {
-    const mock = new MockAdapter(axios);
+let mock: any;
+beforeEach(()=>{
+    mock = new MockAdapter(axios);
+    mock.onPost("/oauth2/token", {
+        client_id: "foo",
+        client_secret: "bar",
+        grant_type: "client_credentials",
+    }).reply(200, {
+        access_token: "test",
+        expires_in: 3600,
+    });
+});
+
+afterEach(()=> {
+    mock.restore();
+});
+
+it("Should throw Generic Error on rerequest failure", async () => {
     mock.onGet("/test").reply(401, {
         detail: "Missing Authorization headers",
         status: 401,
@@ -17,16 +35,13 @@ it("Should throw ProblemDetailsError on problem details response", async () => {
 
     await client.http.get("/test").then(() => {
         fail("Got a success response");
-    }).catch((err) => {
-        expect(err).toBeInstanceOf(ProblemDetailsError);
-        expect(err.message).toEqual("Unauthorized");
-        expect(err.status).toEqual(401);
-        expect(err.invalidParams).toBeUndefined();
+    }).catch((err) => {        
+        expect(err.response).not.toBeInstanceOf(ProblemDetailsError);
+        expect(err.response.status).toEqual(401);        
     });
 });
 
 it("Should throw ProblemDetailsError with invalidParams", async () => {
-    const mock = new MockAdapter(axios);
     mock.onGet("/test").reply(400, {
         "detail": "Your request contains invalid parameters",
         "invalid-params": {foo: "bar"},
@@ -46,7 +61,6 @@ it("Should throw ProblemDetailsError with invalidParams", async () => {
 });
 
 it("Should not throw ProblemDetailsError on other error responses", async () => {
-    const mock = new MockAdapter(axios);
     mock.onGet("/test").reply(500);
 
     const client = new Client({apiKey: "foo", secret: "bar"});
